@@ -185,6 +185,7 @@ class Island(val width: Int, val height: Int) {
         }
     }
 
+
     fun startSimulation() {
         scheduledPool.scheduleAtFixedRate({
             taskPool.execute { // Use execute instead of submit for fire-and-forget
