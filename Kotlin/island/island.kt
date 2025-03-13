@@ -1,11 +1,14 @@
 package Kotlin.island
 
 import java.util.concurrent.*
+import javax.swing.*
+import java.awt.*
+import java.util.concurrent.*
+import kotlin.math.ceil
 import kotlin.random.Random
 import kotlin.math.min
 import kotlin.math.max
 
-// Абстрактный класс для всех животных
 abstract class Animal(
     val symbol: String,
     val maxCountPerCell: Int,
@@ -13,10 +16,10 @@ abstract class Animal(
     val foodNeeded: Double
 ) {
     var satiety: Double = foodNeeded
-    open val foodValue: Double = 0.0  // Добавлено foodValue по умолчанию
+    open val foodValue: Double = 0.0
 
     abstract fun eat(cell: Cell)
-    abstract fun move(island: Island, currentPosition: Pair<Int, Int>)  // Указаны типы Pair
+    abstract fun move(island: Island, currentPosition: Pair<Int, Int>)
     abstract fun reproduce(cell: Cell)
 
     fun die(cell: Cell) {
@@ -24,21 +27,17 @@ abstract class Animal(
     }
 }
 
-// Класс для хищников
 abstract class Predator(symbol: String, maxCountPerCell: Int, speed: Int, foodNeeded: Double) : Animal(symbol, maxCountPerCell, speed, foodNeeded)
 
-// Класс для травоядных
 abstract class Herbivore(symbol: String, maxCountPerCell: Int, speed: Int, foodNeeded: Double) : Animal(symbol, maxCountPerCell, speed, foodNeeded)
 
-// Конкретные классы животных
 class Wolf : Predator("🐺", 30, 3, 8.0) {
-    override val foodValue: Double = 8.0  // Добавлено foodValue для волка
+    override val foodValue: Double = 8.0
 
     override fun eat(cell: Cell) {
-        // Ищем первую попавшуюся жертву, чтобы не итерироваться по всему списку, если нашли
-        val rabbit = cell.herbivores.firstOrNull { it is Rabbit } as? Rabbit // Безопасное приведение типа
+        val rabbit = cell.herbivores.firstOrNull { it is Rabbit } as? Rabbit
         if (rabbit != null && Random.nextInt(100) < 60) {
-            satiety = min(satiety + rabbit.foodValue, foodNeeded) // Чтобы не "переедал"
+            satiety = min(satiety + rabbit.foodValue, foodNeeded)
             cell.removeAnimal(rabbit)
         }
     }
@@ -49,7 +48,7 @@ class Wolf : Predator("🐺", 30, 3, 8.0) {
             val newPosition = island.getValidPosition(currentPosition, direction)
             island.moveAnimal(this, currentPosition, newPosition)
         }
-        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed) // Чтобы не становился отрицательным
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
     }
 
     override fun reproduce(cell: Cell) {
@@ -63,9 +62,9 @@ class Rabbit : Herbivore("🐇", 150, 2, 0.45) {
     override val foodValue: Double = 0.45
 
     override fun eat(cell: Cell) {
-        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)  // Преобразование в Double для корректности
-        satiety = min(satiety + plantsToEat, foodNeeded) // Чтобы не "переедал"
-        cell.plants -= plantsToEat.toInt() // Возврат к Int
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
     }
 
     override fun move(island: Island, currentPosition: Pair<Int, Int>) {
@@ -74,7 +73,7 @@ class Rabbit : Herbivore("🐇", 150, 2, 0.45) {
             val newPosition = island.getValidPosition(currentPosition, direction)
             island.moveAnimal(this, currentPosition, newPosition)
         }
-        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed) // Чтобы не становился отрицательным
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
     }
 
     override fun reproduce(cell: Cell) {
@@ -84,46 +83,48 @@ class Rabbit : Herbivore("🐇", 150, 2, 0.45) {
     }
 }
 
-// Класс для клетки
 data class Cell(
     var plants: Int = 0,
-    val predators: MutableList<Predator> = mutableListOf(), // Указан тип списка
-    val herbivores: MutableList<Herbivore> = mutableListOf() // Указан тип списка
-)
-
-{
+    val predators: MutableList<Predator> = CopyOnWriteArrayList(),
+    val herbivores: MutableList<Herbivore> = CopyOnWriteArrayList()
+) {
     fun removeAnimal(animal: Animal) {
-        when (animal) {
-            is Predator -> predators.remove(animal)
-            is Herbivore -> herbivores.remove(animal)
+        synchronized(animal){
+            when (animal) {
+                is Predator -> predators.remove(animal)
+                is Herbivore -> herbivores.remove(animal)
+            }
         }
     }
 
     fun addPredator(predator: Predator) {
-        if (predators.size < predator.maxCountPerCell) {
-            predators.add(predator)
+        synchronized(predator){
+            if (predators.size < predator.maxCountPerCell) {
+                predators.add(predator)
+            }
         }
     }
 
     fun addHerbivore(herbivore: Herbivore) {
-        if (herbivores.size < herbivore.maxCountPerCell) {
-            herbivores.add(herbivore)
+        synchronized(herbivore){
+            if (herbivores.size < herbivore.maxCountPerCell) {
+                herbivores.add(herbivore)
+            }
         }
     }
 }
 
-// Класс для острова
 class Island(val width: Int, val height: Int) {
     val cells = Array(height) { Array(width) { Cell() } }
-    private val scheduledPool = ScheduledThreadPoolExecutor(1) // Оптимизировано количество потоков
-    private val taskPool = ForkJoinPool.commonPool() // Использовать commonPool
+    private val scheduledPool = ScheduledThreadPoolExecutor(1)
+    private val taskPool = ForkJoinPool.commonPool()
 
     fun initialize() {
         for (y in 0 until height) {
             for (x in 0 until width) {
                 cells[y][x].plants = Random.nextInt(101)
-                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Wolf()) // Улучшено распределение
-                if (Random.nextDouble() < 0.2) cells[y][x].addHerbivore(Rabbit()) // Улучшено распределение
+                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Wolf())
+                if (Random.nextDouble() < 0.2) cells[y][x].addHerbivore(Rabbit())
             }
         }
     }
@@ -131,7 +132,7 @@ class Island(val width: Int, val height: Int) {
     fun growPlants() {
         processCells { cell ->
             if (cell.plants < 200) {
-                cell.plants = min(200, cell.plants + Random.nextInt(1, 10))  // Рост растений случайный, но ограничен 200
+                cell.plants = min(200, cell.plants + Random.nextInt(1, 10))
             }
         }
     }
@@ -156,18 +157,18 @@ class Island(val width: Int, val height: Int) {
     }
 
     fun moveAnimal(animal: Animal, from: Pair<Int, Int>, to: Pair<Int, Int>) {
-        if (from == to) return // Животное не двигается
+        if (from == to) return
         val fromCell = cells[from.second][from.first]
         val toCell = cells[to.second][to.first]
         synchronized(fromCell) {
             synchronized(toCell) {
                 when (animal) {
                     is Predator -> {
-                        if (fromCell.predators.remove(animal)) { // Сначала удаляем, проверяем, что удалили
-                            if (toCell.predators.size < animal.maxCountPerCell) { // Проверяем лимит перед добавлением
+                        if (fromCell.predators.remove(animal)) {
+                            if (toCell.predators.size < animal.maxCountPerCell) {
                                 toCell.addPredator(animal)
                             } else {
-                                fromCell.addPredator(animal) // Если не поместилось, возвращаем обратно
+                                fromCell.addPredator(animal)
                             }
                         }
                     }
@@ -176,7 +177,7 @@ class Island(val width: Int, val height: Int) {
                             if (toCell.herbivores.size < animal.maxCountPerCell) {
                                 toCell.addHerbivore(animal)
                             } else {
-                                fromCell.addHerbivore(animal) // Если не поместилось, возвращаем обратно
+                                fromCell.addHerbivore(animal)
                             }
                         }
                     }
@@ -185,64 +186,83 @@ class Island(val width: Int, val height: Int) {
         }
     }
 
-
-    fun startSimulation() {
+    fun startSimulation(updateUI: () -> Unit) {
         scheduledPool.scheduleAtFixedRate({
-            taskPool.execute { // Use execute instead of submit for fire-and-forget
+            taskPool.execute {
                 try {
                     growPlants()
                     processCells { cell ->
-                        cell.predators.forEach { it.eat(cell) }
-                        cell.herbivores.forEach { it.eat(cell) }
+                        synchronized(cell){
+                            cell.predators.toList().forEach { it.eat(cell) }
+                            cell.herbivores.toList().forEach { it.eat(cell) }
+                        }
                     }
                     processCells { cell ->
-                        //Получение координат ячейки
-                        val x = cells.indexOfFirst { it.contains(cell) }
-                        val y = cells[x].indexOf(cell)
-                        cell.predators.forEach { it.move(this, Pair(y,x)) }
-                        cell.herbivores.forEach { it.move(this, Pair(y,x)) }
+                        val y = cells.indexOfFirst { row -> row.contains(cell) }
+                        val x = cells[y].indexOf(cell)
+                        cell.predators.toList().forEach { it.move(this, Pair(x, y)) }
+                        cell.herbivores.toList().forEach { it.move(this, Pair(x, y)) }
                     }
                     processCells { cell ->
-                        cell.predators.removeIf { it.satiety <= 0 } // Удаление умерших хищников
-                        cell.herbivores.removeIf { it.satiety <= 0 } // Удаление умерших травоядных
+                        cell.predators.removeIf { it.satiety <= 0 }
+                        cell.herbivores.removeIf { it.satiety <= 0 }
                     }
                     processCells { cell ->
                         cell.predators.forEach { it.reproduce(cell) }
                         cell.herbivores.forEach { it.reproduce(cell) }
                     }
+
+                    // Обновляем графический интерфейс
+                    updateUI()
+
                 } catch (e: Exception) {
                     println("Exception during simulation step: ${e.message}")
-                    e.printStackTrace()  // Добавлено логирование ошибки
+                    e.printStackTrace()
                 }
             }
         }, 0, 1, TimeUnit.SECONDS)
     }
 
+
     fun stopSimulation() {
         scheduledPool.shutdown()
         taskPool.shutdown()
-        scheduledPool.awaitTermination(5, TimeUnit.SECONDS) // Добавлено ожидание завершения
-        taskPool.awaitTermination(5, TimeUnit.SECONDS) // Добавлено ожидание завершения
+        scheduledPool.awaitTermination(5, TimeUnit.SECONDS)
+        taskPool.awaitTermination(5, TimeUnit.SECONDS)
     }
+}
 
-    fun render() {
-        print("\u001B[H\u001B[2J")
-        cells.forEach { row ->
-            row.forEach { cell ->
-                val displaySymbol = when {
-                    cell.plants > 0 -> "\u001B[32m🌿\u001B[0m"
-                    cell.predators.isNotEmpty() -> cell.predators.first().symbol
-                    cell.herbivores.isNotEmpty() -> cell.herbivores.first().symbol
-                    else -> "\u001B[33m░\u001B[0m"
+class IslandPanel(private val island: Island) : JPanel() {
+    override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
+        val cellWidth = width / island.width
+        val cellHeight = height / island.height
+
+        for (y in 0 until island.height) {
+            for (x in 0 until island.width) {
+                val cell = island.cells[y][x]
+                val color = when {
+                    cell.predators.isNotEmpty() -> Color.RED
+                    cell.herbivores.isNotEmpty() -> Color.GREEN
+                    cell.plants > 0 -> Color(34, 139, 34) // Forest green
+                    else -> Color.LIGHT_GRAY
                 }
-                print(displaySymbol)
+                g.color = color
+                g.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight)
+
+                // Draw symbols for animals
+                if (cell.predators.isNotEmpty()) {
+                    g.drawString(cell.predators.first().symbol, x * cellWidth + cellWidth / 4, y * cellHeight + cellHeight / 2)
+                } else if (cell.herbivores.isNotEmpty()) {
+                    g.drawString(cell.herbivores.first().symbol, x * cellWidth + cellWidth / 4, y * cellHeight + cellHeight / 2)
+                }
             }
-            println()
         }
     }
 }
 
-// Направления движения
+
+
 enum class Direction {
     UP, DOWN, LEFT, RIGHT;
 
@@ -253,14 +273,20 @@ enum class Direction {
     }
 }
 
-// Главная функция
-fun main() {
-    val island = Island(100, 20)
-    island.initialize()
-    island.startSimulation()
+fun createAndShowGUI(island: Island) {
+    val frame = JFrame("Island Simulation")
+    val islandPanel = IslandPanel(island)
+    frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+    frame.add(islandPanel)
+    frame.setSize(800, 600)
+    frame.isVisible = true
 
-    while (true) {
-        Thread.sleep(1000)
-        island.render()
+    island.startSimulation {
+        islandPanel.repaint()
     }
+}
+fun main() {
+    val island = Island(10, 10)
+    island.initialize()
+    createAndShowGUI(island)
 }
