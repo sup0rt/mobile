@@ -401,7 +401,6 @@ class Caterpillar : Herbivore("🐛", 1000, 0, 0.0) {
     }
 
     override fun move(island: Island, currentPosition: Pair<Int, Int>) {
-        // Гусеницы не двигаются
     }
 
     override fun reproduce(cell: Cell) {
@@ -561,7 +560,6 @@ class Island(val width: Int, val height: Int) {
                         cell.herbivores.forEach { it.reproduce(cell) }
                     }
 
-                    // Обновляем графический интерфейс
                     updateUI()
 
                 } catch (e: Exception) {
@@ -593,13 +591,12 @@ class IslandPanel(private val island: Island) : JPanel() {
                 val color = when {
                     cell.predators.isNotEmpty() -> Color.RED
                     cell.herbivores.isNotEmpty() -> Color.GRAY
-                    cell.plants > 0 -> Color(34, 139, 34) // Forest green
+                    cell.plants > 0 -> Color(34, 139, 34)
                     else -> Color.LIGHT_GRAY
                 }
                 g.color = color
                 g.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight)
 
-                // Draw symbols for animals
                 if (cell.predators.isNotEmpty()) {
                     g.drawString(cell.predators.first().symbol, x * cellWidth + cellWidth / 4, y * cellHeight + cellHeight / 2)
                 } else if (cell.herbivores.isNotEmpty()) {
