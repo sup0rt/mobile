@@ -460,7 +460,20 @@ class Island(val width: Int, val height: Int) {
             for (x in 0 until width) {
                 cells[y][x].plants = Random.nextInt(101)
                 if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Wolf())
-                if (Random.nextDouble() < 0.2) cells[y][x].addHerbivore(Rabbit())
+                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Boa())
+                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Bear())
+                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Fox())
+                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Eagle())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Horse())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Deer())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Mouse())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Goat())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Sheep())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Boar())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Buffalo())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Duck())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Caterpillar())
+                if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Rabbit())
             }
         }
     }
