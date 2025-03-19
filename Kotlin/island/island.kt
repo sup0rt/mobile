@@ -35,10 +35,10 @@ class Wolf : Predator("🐺", 30, 3, 8.0) {
     override val foodValue: Double = 8.0
 
     override fun eat(cell: Cell) {
-        val rabbit = cell.herbivores.firstOrNull { it is Rabbit } as? Rabbit
-        if (rabbit != null && Random.nextInt(100) < 60) {
-            satiety = min(satiety + rabbit.foodValue, foodNeeded)
-            cell.removeAnimal(rabbit)
+        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        if (herbrivore != null && Random.nextInt(100) < 70) {
+            satiety = min(satiety + herbrivore.foodValue, foodNeeded)
+            cell.eatHerbrivore(herbrivore)
         }
     }
 
@@ -54,6 +54,164 @@ class Wolf : Predator("🐺", 30, 3, 8.0) {
     override fun reproduce(cell: Cell) {
         if (cell.predators.count { it is Wolf } >= 2 && Random.nextInt(100) < 15 && cell.predators.size < maxCountPerCell) {
             cell.addPredator(Wolf())
+        }
+    }
+}
+
+class Boa : Predator("🐍", 30, 1, 3.0) {
+    override val foodValue: Double = 3.0
+
+    override fun eat(cell: Cell) {
+        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        if (herbrivore != null && Random.nextInt(100) < 70) {
+            satiety = min(satiety + herbrivore.foodValue, foodNeeded)
+            cell.eatHerbrivore(herbrivore)
+        }
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.predators.count { it is Boa } >= 2 && Random.nextInt(100) < 15 && cell.predators.size < maxCountPerCell) {
+            cell.addPredator(Boa())
+        }
+    }
+}
+
+class Fox : Predator("🦊", 30, 2, 2.0) {
+    override val foodValue: Double = 2.0
+
+    override fun eat(cell: Cell) {
+        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        if (herbrivore != null && Random.nextInt(100) < 70) {
+            satiety = min(satiety + herbrivore.foodValue, foodNeeded)
+            cell.eatHerbrivore(herbrivore)
+        }
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.predators.count { it is Fox } >= 2 && Random.nextInt(100) < 15 && cell.predators.size < maxCountPerCell) {
+            cell.addPredator(Fox())
+        }
+    }
+}
+
+class Bear : Predator("🐻", 5, 2, 80.0) {
+    override val foodValue: Double = 80.0
+
+    override fun eat(cell: Cell) {
+        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        if (herbrivore != null && Random.nextInt(100) < 70) {
+            satiety = min(satiety + herbrivore.foodValue, foodNeeded)
+            cell.eatHerbrivore(herbrivore)
+        }
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.predators.count { it is Bear } >= 2 && Random.nextInt(100) < 15 && cell.predators.size < maxCountPerCell) {
+            cell.addPredator(Bear())
+        }
+    }
+}
+
+class Eagle : Predator("🦅", 20, 3, 1.0) {
+    override val foodValue: Double = 1.0
+
+    override fun eat(cell: Cell) {
+        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        if (herbrivore != null && Random.nextInt(100) < 70) {
+            satiety = min(satiety + herbrivore.foodValue, foodNeeded)
+            cell.eatHerbrivore(herbrivore)
+        }
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.predators.count { it is Eagle } >= 2 && Random.nextInt(100) < 15 && cell.predators.size < maxCountPerCell) {
+            cell.addPredator(Eagle())
+        }
+    }
+}
+
+class Horse : Herbivore("🐎", 20, 4, 60.0) {
+    override val foodValue: Double = 60.0
+
+    override fun eat(cell: Cell) {
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.herbivores.count { it is Horse } >= 2 && Random.nextInt(100) < 15 && cell.herbivores.size < maxCountPerCell) {
+            cell.addHerbivore(Horse())
+        }
+    }
+}
+
+class Deer : Herbivore("🦌", 20, 4, 50.0) {
+    override val foodValue: Double = 50.0
+
+    override fun eat(cell: Cell) {
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.herbivores.count { it is Deer } >= 2 && Random.nextInt(100) < 15 && cell.herbivores.size < maxCountPerCell) {
+            cell.addHerbivore(Deer())
         }
     }
 }
@@ -83,6 +241,176 @@ class Rabbit : Herbivore("🐇", 150, 2, 0.45) {
     }
 }
 
+class Mouse : Herbivore("🐭", 500, 1, 0.01) {
+    override val foodValue: Double = 0.01
+
+    override fun eat(cell: Cell) {
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.herbivores.count { it is Mouse } >= 2 && Random.nextInt(100) < 15 && cell.herbivores.size < maxCountPerCell) {
+            cell.addHerbivore(Mouse())
+        }
+    }
+}
+
+class Goat : Herbivore("🐐", 140, 3, 10.0) {
+    override val foodValue: Double = 10.0
+
+    override fun eat(cell: Cell) {
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.herbivores.count { it is Goat } >= 2 && Random.nextInt(100) < 15 && cell.herbivores.size < maxCountPerCell) {
+            cell.addHerbivore(Goat())
+        }
+    }
+}
+
+class Sheep : Herbivore("🐑", 140, 3, 15.0) {
+    override val foodValue: Double = 15.0
+
+    override fun eat(cell: Cell) {
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.herbivores.count { it is Sheep } >= 2 && Random.nextInt(100) < 15 && cell.herbivores.size < maxCountPerCell) {
+            cell.addHerbivore(Sheep())
+        }
+    }
+}
+
+class Boar : Herbivore("🐗", 50, 2, 50.0) {
+    override val foodValue: Double = 50.0
+
+    override fun eat(cell: Cell) {
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.herbivores.count { it is Boar } >= 2 && Random.nextInt(100) < 15 && cell.herbivores.size < maxCountPerCell) {
+            cell.addHerbivore(Boar())
+        }
+    }
+}
+
+class Buffalo : Herbivore("🐃", 10, 3, 100.0) {
+    override val foodValue: Double = 100.0
+
+    override fun eat(cell: Cell) {
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.herbivores.count { it is Buffalo } >= 2 && Random.nextInt(100) < 15 && cell.herbivores.size < maxCountPerCell) {
+            cell.addHerbivore(Buffalo())
+        }
+    }
+}
+
+class Duck : Herbivore("🦆", 200, 4, 0.15) {
+    override val foodValue: Double = 0.15
+
+    override fun eat(cell: Cell) {
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        repeat(speed) {
+            val direction = Direction.random()
+            val newPosition = island.getValidPosition(currentPosition, direction)
+            island.moveAnimal(this, currentPosition, newPosition)
+        }
+        satiety = max(0.0, satiety - foodNeeded * 0.1 * speed)
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.herbivores.count { it is Duck } >= 2 && Random.nextInt(100) < 15 && cell.herbivores.size < maxCountPerCell) {
+            cell.addHerbivore(Duck())
+        }
+    }
+}
+
+class Caterpillar : Herbivore("🐛", 1000, 0, 0.0) {
+    override val foodValue: Double = 0.0
+
+    override fun eat(cell: Cell) {
+        val plantsToEat = min(cell.plants.toDouble(), foodNeeded - satiety)
+        satiety = min(satiety + plantsToEat, foodNeeded)
+        cell.plants -= plantsToEat.toInt()
+    }
+
+    override fun move(island: Island, currentPosition: Pair<Int, Int>) {
+        // Гусеницы не двигаются
+    }
+
+    override fun reproduce(cell: Cell) {
+        if (cell.herbivores.count { it is Caterpillar } >= 2 && Random.nextInt(100) < 15 && cell.herbivores.size < maxCountPerCell) {
+            cell.addHerbivore(Caterpillar())
+        }
+    }
+}
+
 data class Cell(
     var plants: Int = 0,
     val predators: MutableList<Predator> = CopyOnWriteArrayList(),
@@ -92,6 +420,14 @@ data class Cell(
         synchronized(animal){
             when (animal) {
                 is Predator -> predators.remove(animal)
+                is Herbivore -> herbivores.remove(animal)
+            }
+        }
+    }
+
+    fun eatHerbrivore(animal: Animal) {
+        synchronized(animal){
+            when (animal) {
                 is Herbivore -> herbivores.remove(animal)
             }
         }
