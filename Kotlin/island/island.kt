@@ -592,7 +592,7 @@ class IslandPanel(private val island: Island) : JPanel() {
                 val cell = island.cells[y][x]
                 val color = when {
                     cell.predators.isNotEmpty() -> Color.RED
-                    cell.herbivores.isNotEmpty() -> Color.GREEN
+                    cell.herbivores.isNotEmpty() -> Color.GRAY
                     cell.plants > 0 -> Color(34, 139, 34) // Forest green
                     else -> Color.LIGHT_GRAY
                 }
