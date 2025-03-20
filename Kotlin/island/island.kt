@@ -3,14 +3,11 @@ package Kotlin.island
 import java.util.concurrent.*
 import javax.swing.*
 import java.awt.*
-import java.util.concurrent.*
-import kotlin.math.ceil
 import kotlin.random.Random
 import kotlin.math.min
 import kotlin.math.max
 
-abstract class Animal(
-    val symbol: String,
+sealed class Animal(
     val maxCountPerCell: Int,
     val speed: Int,
     val foodNeeded: Double
@@ -22,16 +19,30 @@ abstract class Animal(
     abstract fun move(island: Island, currentPosition: Pair<Int, Int>)
     abstract fun reproduce(cell: Cell)
 
-    fun die(cell: Cell) {
-        cell.removeAnimal(this)
+    fun die(cell: Cell, island: Island) {
+        val (x, y) = island.cells.mapIndexedNotNull { y, row ->
+            row.mapIndexedNotNull { x, cell ->
+                if (cell.herbivores.contains(this) || cell.predators.contains(this)) {
+                    x to y
+                } else {
+                    null
+                }
+            }.firstOrNull()
+        }.firstOrNull() ?: return
+
+        val cell = island.cells[y][x]
+        synchronized(cell){
+            cell.removeAnimal(this)
+        }
     }
 }
 
-abstract class Predator(symbol: String, maxCountPerCell: Int, speed: Int, foodNeeded: Double) : Animal(symbol, maxCountPerCell, speed, foodNeeded)
 
-abstract class Herbivore(symbol: String, maxCountPerCell: Int, speed: Int, foodNeeded: Double) : Animal(symbol, maxCountPerCell, speed, foodNeeded)
+abstract class Predator( maxCountPerCell: Int, speed: Int, foodNeeded: Double) : Animal( maxCountPerCell, speed, foodNeeded)
 
-class Wolf : Predator("🐺", 30, 3, 8.0) {
+abstract class Herbivore( maxCountPerCell: Int, speed: Int, foodNeeded: Double) : Animal( maxCountPerCell, speed, foodNeeded)
+
+class Wolf : Predator( 30, 3, 8.0) {
     override val foodValue: Double = 8.0
 
     override fun eat(cell: Cell) {
@@ -58,7 +69,7 @@ class Wolf : Predator("🐺", 30, 3, 8.0) {
     }
 }
 
-class Boa : Predator("🐍", 30, 1, 3.0) {
+class Boa : Predator(30, 1, 3.0) {
     override val foodValue: Double = 3.0
 
     override fun eat(cell: Cell) {
@@ -85,7 +96,7 @@ class Boa : Predator("🐍", 30, 1, 3.0) {
     }
 }
 
-class Fox : Predator("🦊", 30, 2, 2.0) {
+class Fox : Predator( 30, 2, 2.0) {
     override val foodValue: Double = 2.0
 
     override fun eat(cell: Cell) {
@@ -112,7 +123,7 @@ class Fox : Predator("🦊", 30, 2, 2.0) {
     }
 }
 
-class Bear : Predator("🐻", 5, 2, 80.0) {
+class Bear : Predator( 5, 2, 80.0) {
     override val foodValue: Double = 80.0
 
     override fun eat(cell: Cell) {
@@ -139,7 +150,7 @@ class Bear : Predator("🐻", 5, 2, 80.0) {
     }
 }
 
-class Eagle : Predator("🦅", 20, 3, 1.0) {
+class Eagle : Predator( 20, 3, 1.0) {
     override val foodValue: Double = 1.0
 
     override fun eat(cell: Cell) {
@@ -166,7 +177,7 @@ class Eagle : Predator("🦅", 20, 3, 1.0) {
     }
 }
 
-class Horse : Herbivore("🐎", 20, 4, 60.0) {
+class Horse : Herbivore( 20, 4, 60.0) {
     override val foodValue: Double = 60.0
 
     override fun eat(cell: Cell) {
@@ -191,7 +202,7 @@ class Horse : Herbivore("🐎", 20, 4, 60.0) {
     }
 }
 
-class Deer : Herbivore("🦌", 20, 4, 50.0) {
+class Deer : Herbivore( 20, 4, 50.0) {
     override val foodValue: Double = 50.0
 
     override fun eat(cell: Cell) {
@@ -216,7 +227,7 @@ class Deer : Herbivore("🦌", 20, 4, 50.0) {
     }
 }
 
-class Rabbit : Herbivore("🐇", 150, 2, 0.45) {
+class Rabbit : Herbivore( 150, 2, 0.45) {
     override val foodValue: Double = 0.45
 
     override fun eat(cell: Cell) {
@@ -241,7 +252,7 @@ class Rabbit : Herbivore("🐇", 150, 2, 0.45) {
     }
 }
 
-class Mouse : Herbivore("🐭", 500, 1, 0.01) {
+class Mouse : Herbivore( 500, 1, 0.01) {
     override val foodValue: Double = 0.01
 
     override fun eat(cell: Cell) {
@@ -266,7 +277,7 @@ class Mouse : Herbivore("🐭", 500, 1, 0.01) {
     }
 }
 
-class Goat : Herbivore("🐐", 140, 3, 10.0) {
+class Goat : Herbivore( 140, 3, 10.0) {
     override val foodValue: Double = 10.0
 
     override fun eat(cell: Cell) {
@@ -291,7 +302,7 @@ class Goat : Herbivore("🐐", 140, 3, 10.0) {
     }
 }
 
-class Sheep : Herbivore("🐑", 140, 3, 15.0) {
+class Sheep : Herbivore( 140, 3, 15.0) {
     override val foodValue: Double = 15.0
 
     override fun eat(cell: Cell) {
@@ -316,7 +327,7 @@ class Sheep : Herbivore("🐑", 140, 3, 15.0) {
     }
 }
 
-class Boar : Herbivore("🐗", 50, 2, 50.0) {
+class Boar : Herbivore( 50, 2, 50.0) {
     override val foodValue: Double = 50.0
 
     override fun eat(cell: Cell) {
@@ -341,7 +352,7 @@ class Boar : Herbivore("🐗", 50, 2, 50.0) {
     }
 }
 
-class Buffalo : Herbivore("🐃", 10, 3, 100.0) {
+class Buffalo : Herbivore( 10, 3, 100.0) {
     override val foodValue: Double = 100.0
 
     override fun eat(cell: Cell) {
@@ -366,7 +377,7 @@ class Buffalo : Herbivore("🐃", 10, 3, 100.0) {
     }
 }
 
-class Duck : Herbivore("🦆", 200, 4, 0.15) {
+class Duck : Herbivore( 200, 4, 0.15) {
     override val foodValue: Double = 0.15
 
     override fun eat(cell: Cell) {
@@ -391,7 +402,7 @@ class Duck : Herbivore("🦆", 200, 4, 0.15) {
     }
 }
 
-class Caterpillar : Herbivore("🐛", 1000, 0, 0.0) {
+class Caterpillar : Herbivore( 1000, 0, 0.0) {
     override val foodValue: Double = 0.0
 
     override fun eat(cell: Cell) {
@@ -416,24 +427,20 @@ data class Cell(
     val herbivores: MutableList<Herbivore> = CopyOnWriteArrayList()
 ) {
     fun removeAnimal(animal: Animal) {
-        synchronized(animal){
-            when (animal) {
-                is Predator -> predators.remove(animal)
-                is Herbivore -> herbivores.remove(animal)
-            }
+        when (animal) {
+            is Herbivore -> herbivores.remove(animal)
+            is Predator -> predators.remove(animal)
         }
     }
 
-    fun eatHerbrivore(animal: Animal) {
-        synchronized(animal){
-            when (animal) {
-                is Herbivore -> herbivores.remove(animal)
-            }
+    fun eatHerbrivore(herbivore: Herbivore) {
+        synchronized(herbivores) {
+            herbivores.remove(herbivore)
         }
     }
 
     fun addPredator(predator: Predator) {
-        synchronized(predator){
+        synchronized(predators) {
             if (predators.size < predator.maxCountPerCell) {
                 predators.add(predator)
             }
@@ -441,7 +448,7 @@ data class Cell(
     }
 
     fun addHerbivore(herbivore: Herbivore) {
-        synchronized(herbivore){
+        synchronized(herbivores) {
             if (herbivores.size < herbivore.maxCountPerCell) {
                 herbivores.add(herbivore)
             }
@@ -453,16 +460,17 @@ class Island(val width: Int, val height: Int) {
     val cells = Array(height) { Array(width) { Cell() } }
     private val scheduledPool = ScheduledThreadPoolExecutor(1)
     private val taskPool = ForkJoinPool.commonPool()
+    var simulationRunning = true
 
     fun initialize() {
         for (y in 0 until height) {
             for (x in 0 until width) {
                 cells[y][x].plants = Random.nextInt(101)
-                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Wolf())
-                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Boa())
-                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Bear())
-                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Fox())
-                if (Random.nextDouble() < 0.1) cells[y][x].addPredator(Eagle())
+                if (Random.nextDouble() < 0.2) cells[y][x].addPredator(Wolf())
+                if (Random.nextDouble() < 0.2) cells[y][x].addPredator(Boa())
+                if (Random.nextDouble() < 0.2) cells[y][x].addPredator(Bear())
+                if (Random.nextDouble() < 0.2) cells[y][x].addPredator(Fox())
+                if (Random.nextDouble() < 0.2) cells[y][x].addPredator(Eagle())
                 if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Horse())
                 if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Deer())
                 if (Random.nextDouble() < 0.1) cells[y][x].addHerbivore(Mouse())
@@ -537,6 +545,7 @@ class Island(val width: Int, val height: Int) {
     fun startSimulation(updateUI: () -> Unit) {
         scheduledPool.scheduleAtFixedRate({
             taskPool.execute {
+                if (!simulationRunning) return@execute
                 try {
                     growPlants()
                     processCells { cell ->
@@ -552,12 +561,30 @@ class Island(val width: Int, val height: Int) {
                         cell.herbivores.toList().forEach { it.move(this, Pair(x, y)) }
                     }
                     processCells { cell ->
-                        cell.predators.removeIf { it.satiety <= 0 }
-                        cell.herbivores.removeIf { it.satiety <= 0 }
+                        cell.predators.toList().forEach {
+                            if(it.satiety <= 0) {
+                                it.die(cell, this)
+                            }
+                        }
+                        cell.herbivores.toList().forEach {
+                            if(it.satiety <= 0) {
+                                it.die(cell, this)
+                            }
+                        }
                     }
                     processCells { cell ->
                         cell.predators.forEach { it.reproduce(cell) }
                         cell.herbivores.forEach { it.reproduce(cell) }
+                    }
+
+                    val totalPredators = cells.sumOf { row -> row.sumOf { cell -> cell.predators.size } }
+                    val totalHerbivores = cells.sumOf { row -> row.sumOf { cell -> cell.herbivores.size } }
+                    println("Total Predators: $totalPredators, Total Herbivores: $totalHerbivores")
+
+                    if (totalPredators == 0 && totalHerbivores == 0) {
+                        println("All animals are dead. Stopping simulation.")
+                        stopSimulation()
+                        simulationRunning = false
                     }
 
                     updateUI()
@@ -596,12 +623,6 @@ class IslandPanel(private val island: Island) : JPanel() {
                 }
                 g.color = color
                 g.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight)
-
-                if (cell.predators.isNotEmpty()) {
-                    g.drawString(cell.predators.first().symbol, x * cellWidth + cellWidth / 4, y * cellHeight + cellHeight / 2)
-                } else if (cell.herbivores.isNotEmpty()) {
-                    g.drawString(cell.herbivores.first().symbol, x * cellWidth + cellWidth / 4, y * cellHeight + cellHeight / 2)
-                }
             }
         }
     }
