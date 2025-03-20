@@ -1,4 +1,4 @@
-package Kotlin.island
+package Kotlin.Island
 
 import java.util.concurrent.*
 import javax.swing.*
@@ -7,7 +7,7 @@ import kotlin.random.Random
 import kotlin.math.min
 import kotlin.math.max
 
-sealed class Animal(
+abstract class Animal(
     val maxCountPerCell: Int,
     val speed: Int,
     val foodNeeded: Double
@@ -19,18 +19,8 @@ sealed class Animal(
     abstract fun move(island: Island, currentPosition: Pair<Int, Int>)
     abstract fun reproduce(cell: Cell)
 
-    fun die(cell: Cell, island: Island) {
-        val (x, y) = island.cells.mapIndexedNotNull { y, row ->
-            row.mapIndexedNotNull { x, cell ->
-                if (cell.herbivores.contains(this) || cell.predators.contains(this)) {
-                    x to y
-                } else {
-                    null
-                }
-            }.firstOrNull()
-        }.firstOrNull() ?: return
+    fun die(cell: Cell) {
 
-        val cell = island.cells[y][x]
         synchronized(cell){
             cell.removeAnimal(this)
         }
@@ -46,7 +36,7 @@ class Wolf : Predator( 30, 3, 8.0) {
     override val foodValue: Double = 8.0
 
     override fun eat(cell: Cell) {
-        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        val herbrivore = cell.herbivores.firstOrNull { true }
         if (herbrivore != null && Random.nextInt(100) < 70) {
             satiety = min(satiety + herbrivore.foodValue, foodNeeded)
             cell.eatHerbrivore(herbrivore)
@@ -73,7 +63,7 @@ class Boa : Predator(30, 1, 3.0) {
     override val foodValue: Double = 3.0
 
     override fun eat(cell: Cell) {
-        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        val herbrivore = cell.herbivores.firstOrNull { true }
         if (herbrivore != null && Random.nextInt(100) < 70) {
             satiety = min(satiety + herbrivore.foodValue, foodNeeded)
             cell.eatHerbrivore(herbrivore)
@@ -100,7 +90,7 @@ class Fox : Predator( 30, 2, 2.0) {
     override val foodValue: Double = 2.0
 
     override fun eat(cell: Cell) {
-        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        val herbrivore = cell.herbivores.firstOrNull { true }
         if (herbrivore != null && Random.nextInt(100) < 70) {
             satiety = min(satiety + herbrivore.foodValue, foodNeeded)
             cell.eatHerbrivore(herbrivore)
@@ -127,7 +117,7 @@ class Bear : Predator( 5, 2, 80.0) {
     override val foodValue: Double = 80.0
 
     override fun eat(cell: Cell) {
-        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        val herbrivore = cell.herbivores.firstOrNull { true }
         if (herbrivore != null && Random.nextInt(100) < 70) {
             satiety = min(satiety + herbrivore.foodValue, foodNeeded)
             cell.eatHerbrivore(herbrivore)
@@ -154,7 +144,7 @@ class Eagle : Predator( 20, 3, 1.0) {
     override val foodValue: Double = 1.0
 
     override fun eat(cell: Cell) {
-        val herbrivore = cell.herbivores.firstOrNull { it is Herbivore }
+        val herbrivore = cell.herbivores.firstOrNull { true }
         if (herbrivore != null && Random.nextInt(100) < 70) {
             satiety = min(satiety + herbrivore.foodValue, foodNeeded)
             cell.eatHerbrivore(herbrivore)
@@ -460,7 +450,7 @@ class Island(val width: Int, val height: Int) {
     val cells = Array(height) { Array(width) { Cell() } }
     private val scheduledPool = ScheduledThreadPoolExecutor(1)
     private val taskPool = ForkJoinPool.commonPool()
-    var simulationRunning = true
+    private var simulationRunning = true
 
     fun initialize() {
         for (y in 0 until height) {
@@ -485,7 +475,7 @@ class Island(val width: Int, val height: Int) {
         }
     }
 
-    fun growPlants() {
+    private fun growPlants() {
         processCells { cell ->
             if (cell.plants < 200) {
                 cell.plants = min(200, cell.plants + Random.nextInt(1, 10))
@@ -493,7 +483,7 @@ class Island(val width: Int, val height: Int) {
         }
     }
 
-    fun processCells(action: (Cell) -> Unit) {
+    private fun processCells(action: (Cell) -> Unit) {
         for (y in 0 until height) {
             for (x in 0 until width) {
                 action(cells[y][x])
@@ -550,8 +540,12 @@ class Island(val width: Int, val height: Int) {
                     growPlants()
                     processCells { cell ->
                         synchronized(cell){
-                            cell.predators.toList().forEach { it.eat(cell) }
-                            cell.herbivores.toList().forEach { it.eat(cell) }
+                            cell.predators.toList().forEach {
+                                it.eat(cell)
+                            }
+                            cell.herbivores.toList().forEach {
+                                it.eat(cell)
+                            }
                         }
                     }
                     processCells { cell ->
@@ -563,19 +557,24 @@ class Island(val width: Int, val height: Int) {
                     processCells { cell ->
                         cell.predators.toList().forEach {
                             if(it.satiety <= 0) {
-                                it.die(cell, this)
+                                it.die(cell)
                             }
                         }
                         cell.herbivores.toList().forEach {
                             if(it.satiety <= 0) {
-                                it.die(cell, this)
+                                it.die(cell)
                             }
                         }
                     }
                     processCells { cell ->
-                        cell.predators.forEach { it.reproduce(cell) }
-                        cell.herbivores.forEach { it.reproduce(cell) }
+                        cell.predators.forEach {
+                            it.reproduce(cell)
+                        }
+                        cell.herbivores.forEach {
+                            it.reproduce(cell)
+                        }
                     }
+
 
                     val totalPredators = cells.sumOf { row -> row.sumOf { cell -> cell.predators.size } }
                     val totalHerbivores = cells.sumOf { row -> row.sumOf { cell -> cell.herbivores.size } }
@@ -598,7 +597,7 @@ class Island(val width: Int, val height: Int) {
     }
 
 
-    fun stopSimulation() {
+    private fun stopSimulation() {
         scheduledPool.shutdown()
         taskPool.shutdown()
         scheduledPool.awaitTermination(5, TimeUnit.SECONDS)
@@ -635,7 +634,7 @@ enum class Direction {
 
     companion object {
         fun random(): Direction {
-            return values()[Random.nextInt(values().size)]
+            return entries[Random.nextInt(entries.size)]
         }
     }
 }

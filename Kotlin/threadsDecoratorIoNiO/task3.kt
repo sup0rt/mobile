@@ -9,9 +9,9 @@ import kotlin.system.measureNanoTime
 
 fun main() {
 
-    val inputFile = "Kotlin/threadsDecoratorIoNiO/files/input.txt"
-    val outputFileIO = "Kotlin/threadsDecoratorIoNiO/files/outIO.txt"
-    val outputFileNIO = "Kotlin/threadsDecoratorIoNiO/files/outNIO.txt"
+    val inputFile = "kotlin/threadsDecoratorIoNiO/files/input.txt"
+    val outputFileIO = "kotlin/threadsDecoratorIoNiO/files/outIO.txt"
+    val outputFileNIO = "kotlin/threadsDecoratorIoNiO/files/outNIO.txt"
 
     println("\nIO test:")
     measureIOTest(inputFile, outputFileIO)

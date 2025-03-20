@@ -9,8 +9,8 @@ import kotlin.system.measureNanoTime
 
 
 fun main() {
-    val inputFile = "Kotlin/threadsDecoratorIoNiO/files/input.txt"
-    val outputFileNIO = "Kotlin/threadsDecoratorIoNiO/files/outNIO2.txt"
+    val inputFile = "kotlin/threadsDecoratorIoNiO/files/input.txt"
+    val outputFileNIO = "kotlin/threadsDecoratorIoNiO/files/outNIO2.txt"
 
     println("\nNIO copying file test:")
     copyFileNIO(inputFile, outputFileNIO)

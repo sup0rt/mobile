@@ -8,8 +8,8 @@ import java.io.FileWriter
 import java.io.IOException
 
 fun main(){
-    val inputFile = "Kotlin/threadsDecoratorIoNiO/files/input.txt"
-    val outputFile = "Kotlin/threadsDecoratorIoNiO/files/out.txt"
+    val inputFile = "kotlin/threadsDecoratorIoNiO/files/input.txt"
+    val outputFile = "kotlin/threadsDecoratorIoNiO/files/out.txt"
 
     copyFile(inputFile, outputFile)
 }

@@ -29,5 +29,5 @@ fun main() {
     val start = LocalDateTime.of(2024, 1, 1, 9, 0) // March 1st, 9 AM
     val end = LocalDateTime.of(2024, 1, 8, 17, 0)  // March 8th, 5 PM
 
-    println(calculateWorkingHours(start, end))
+    println(Kotlin.dateTime.calculateWorkingHours(start, end))
 }

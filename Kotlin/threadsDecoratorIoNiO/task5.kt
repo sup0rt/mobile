@@ -11,7 +11,7 @@ import java.util.concurrent.Executors
 import kotlin.system.exitProcess
 
 fun main() {
-    val inputFile = "Kotlin/threadsDecoratorIoNiO/files/input.txt"
+    val inputFile = "kotlin/threadsDecoratorIoNiO/files/input.txt"
     readAsyncFile(inputFile)
 }
 
